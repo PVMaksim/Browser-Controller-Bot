@@ -1,0 +1,51 @@
+# Секреты — никогда не коммитить
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Виртуальные окружения
+venv/
+.venv/
+env/
+
+# Временные файлы бота
+tmp/
+logs/
+
+# Артефакты сборки
+dist/
+*.dmg
+*.exe
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Playwright
+playwright-report/
+test-results/
+
+# Profiler
+*.prof
