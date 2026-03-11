@@ -127,17 +127,14 @@ class TestHandleHang:
 
 class TestLifecycle:
 
-    def test_starts_and_creates_task(self):
+    @pytest.mark.asyncio
+    async def test_starts_and_creates_task(self):
         wd, _, _ = _make_watchdog()
-        loop = asyncio.new_event_loop()
-        try:
-            loop.run_until_complete(asyncio.sleep(0))
+        with patch("src.browser.watchdog.asyncio.create_task") as mock_task:
+            mock_task.return_value = MagicMock()
             wd.start()
             assert wd.is_running
-            assert wd._task is not None
-        finally:
-            wd.stop()
-            loop.close()
+            mock_task.assert_called_once()
 
     def test_stop_sets_running_false(self):
         wd, _, _ = _make_watchdog()

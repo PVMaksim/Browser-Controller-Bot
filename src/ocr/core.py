@@ -18,6 +18,7 @@ EasyOCR выбран перед PaddleOCR:
 Размер моделей: ~130 МБ (en + ru)
 """
 
+import importlib.util
 from pathlib import Path
 from urllib.parse import quote_plus
 
@@ -42,7 +43,6 @@ class OCRProcessor:
     def is_available(self) -> bool:
         """Return True if EasyOCR is installed."""
         try:
-            import importlib.util
             return importlib.util.find_spec("easyocr") is not None
         except Exception:
             return False

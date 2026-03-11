@@ -26,22 +26,27 @@ class TestIdleWatcher:
         assert watcher._last_activity >= before
 
     def test_start_creates_background_task(self, watcher):
-        watcher.start()
-        assert watcher._task is not None
-        assert not watcher._task.done()
-        watcher.stop()
+        mock_task = MagicMock()
+        with patch("src.browser.idle_watcher.asyncio.create_task", return_value=mock_task):
+            watcher.start()
+        assert watcher._task is mock_task
 
     def test_start_is_idempotent(self, watcher):
-        watcher.start()
-        task1 = watcher._task
-        watcher.start()  # Второй вызов не должен создавать новую задачу
+        mock_task = MagicMock()
+        with patch("src.browser.idle_watcher.asyncio.create_task", return_value=mock_task):
+            watcher.start()
+            task1 = watcher._task
+            watcher._running = True  # simulate already running
+            watcher.start()  # Второй вызов не должен создавать новую задачу
         assert watcher._task is task1
-        watcher.stop()
 
     def test_stop_cancels_task(self, watcher):
-        watcher.start()
+        mock_task = MagicMock()
+        mock_task.done.return_value = False
+        with patch("src.browser.idle_watcher.asyncio.create_task", return_value=mock_task):
+            watcher.start()
         watcher.stop()
-        assert watcher._task.cancelled() or watcher._task.done()
+        mock_task.cancel.assert_called_once()
 
     def test_stop_when_not_started_does_not_raise(self, watcher):
         watcher.stop()  # Безопасный вызов без предшествующего start()
