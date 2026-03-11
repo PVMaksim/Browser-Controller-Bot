@@ -4,7 +4,7 @@
 ; Требования: Inno Setup 6, файл dist\SecureBrowserBot.exe
 
 #define MyAppName "Secure Browser Bot"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "SecureBrowserBot"
 #define MyAppURL "https://github.com/user/secure-browser-bot"
 #define MyAppExeName "SecureBrowserBot.exe"
@@ -23,9 +23,9 @@ DisableProgramGroupPage=yes
 ; Установщик не требует прав администратора для установки в AppData
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
-OutputDir=dist
+OutputDir=..\..\dist
 OutputBaseFilename=SecureBrowserBot-Setup-{#MyAppVersion}
-SetupIconFile=installer\windows\icon.ico
+SetupIconFile=icon.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -42,9 +42,10 @@ Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"
 Name: "autostart"; Description: "Запускать автоматически при входе в систему (рекомендуется)"; GroupDescription: "Дополнительные задачи:"
 
 [Files]
-Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".env.example";         DestDir: "{app}"; Flags: ignoreversion
-Source: "installer\windows\README_FIRST.txt"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\..\dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\.env.example";         DestDir: "{app}"; Flags: ignoreversion
+Source: "README_FIRST.txt"; DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "..\..\scripts\install_deps.py";           DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}";     Filename: "{app}\{#MyAppExeName}"
@@ -59,10 +60,10 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run";
     Tasks: autostart
 
 [Run]
-; Установка NSSM и nircmd через winget после основной установки
+; Установка ffmpeg через winget если не установлен
 Filename: "powershell.exe";
-    Parameters: "-ExecutionPolicy Bypass -File ""{app}\setup_windows.ps1""";
-    Description: "Установить зависимости (ffmpeg, nircmd)";
+    Parameters: "-Command \"if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { winget install --id Gyan.FFmpeg --silent --accept-package-agreements --accept-source-agreements }\"";
+    Description: "Установить ffmpeg (необходим для голосовых команд)";
     Flags: nowait postinstall skipifsilent runasoriginaluser
 
 ; Запуск бота после установки
