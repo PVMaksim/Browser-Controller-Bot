@@ -67,3 +67,12 @@ RATE_LIMIT_NOTIFY_COOLDOWN_SEC = 30.0  # Не чаще раза в 30 сек п�
 WATCHDOG_CHECK_INTERVAL_SEC = 60    # Проверять браузер каждые 60 секунд
 WATCHDOG_PROBE_TIMEOUT_MS = 5000    # Таймаут JS-пробы (5 сек)
 WATCHDOG_MAX_RESTARTS = 5           # Максимум автоматических перезапусков
+
+# OCR (ocr/core.py) — EasyOCR
+OCR_LANGUAGES = ("ru", "en")        # Языки распознавания
+OCR_MIN_CONFIDENCE = 0.4            # Минимальный порог уверенности (0..1)
+OCR_MAX_IMAGE_BYTES = 20 * 1024 * 1024  # Макс. размер изображения (20 МБ)
+
+# Search retry (player/controller.py)
+SEARCH_RETRY_COUNT = 2              # Число повторных попыток (итого 3)
+SEARCH_RETRY_DELAY_SEC = 3.0        # Пауза между попытками
