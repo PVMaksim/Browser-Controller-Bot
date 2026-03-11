@@ -34,7 +34,7 @@ jobs:
         run: |
           python scripts/install_deps.py
           pip install pyinstaller --quiet
-          playwright install chromium
+          python -m playwright install chromium
 
       - name: Extract version from tag
         id: version
@@ -75,7 +75,7 @@ jobs:
         run: |
           python scripts/install_deps.py
           pip install pyinstaller --quiet
-          playwright install chromium
+          python -m playwright install chromium
 
       - name: Extract version from tag
         id: version
