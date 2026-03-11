@@ -1,0 +1,109 @@
+[build-system]
+requires = ["setuptools>=72", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "secure-browser-bot"
+version = "1.1.0"
+description = "Telegram bot for remote Mac/Windows browser control"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+
+dependencies = [
+    "aiogram==3.13.1",
+    "playwright==1.49.0",
+    "faster-whisper==1.1.0",
+    "python-dotenv==1.0.1",
+    "platformdirs==4.3.6",
+    "loguru==0.7.3",
+    "psutil==6.1.1",
+]
+
+[project.optional-dependencies]
+stealth = ["playwright-stealth==1.0.6"]
+ocr    = ["easyocr>=1.7"]
+macos  = ["rumps>=0.4"]
+dev    = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-mock>=3.14",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+all = [
+    "secure-browser-bot[stealth]",
+    "secure-browser-bot[ocr]",
+    "secure-browser-bot[macos]",
+]
+
+[project.scripts]
+sbb        = "src.main:main"
+sbb-cli    = "src.platform.cli:cli_main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+# ------------------------------------------------------------------ #
+# Ruff                                                                  #
+# ------------------------------------------------------------------ #
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",   # line too long — checked by formatter
+    "B008",   # do not perform function calls in default arguments
+    "RUF012", # mutable class attributes — false positives with aiogram
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+# ------------------------------------------------------------------ #
+# Mypy                                                                  #
+# ------------------------------------------------------------------ #
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = false
+files = ["src"]
+
+# ------------------------------------------------------------------ #
+# Coverage                                                              #
+# ------------------------------------------------------------------ #
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "src/platform/menu_bar.py",   # требует macOS rumps
+    "src/platform/launchd.py",    # требует macOS
+    "src/platform/windows_service.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 70
+
+[tool.coverage.html]
+directory = "htmlcov"

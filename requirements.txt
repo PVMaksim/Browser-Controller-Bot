@@ -1,0 +1,19 @@
+# Telegram
+aiogram==3.13.1
+
+# Browser automation
+playwright==1.49.0
+playwright-stealth==1.0.6
+
+# Voice processing (Stage 3)
+faster-whisper==1.1.0
+
+# Config & paths
+python-dotenv==1.0.1
+platformdirs==4.3.6
+
+# Logging
+loguru==0.7.3
+
+# System monitoring (Stage 4.5)
+psutil==6.1.1
