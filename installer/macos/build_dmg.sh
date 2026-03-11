@@ -10,7 +10,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DIST_DIR="$ROOT_DIR/dist"
 APP_NAME="SecureBrowserBot"
 DMG_NAME="${APP_NAME}.dmg"
-VERSION=$(grep 'APP_VERSION' "$ROOT_DIR/src/config/constants.py" | grep -oP '"\K[^"]+' | head -1)
+VERSION=$(sed -n 's/^APP_VERSION = "\(.*\)"/\1/p' "$ROOT_DIR/src/config/constants.py" | head -1)
 
 echo "═══════════════════════════════════════════════"
 echo "  Secure Browser Bot — macOS Build"
