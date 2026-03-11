@@ -65,10 +65,7 @@ class RateLimiterMiddleware(BaseMiddleware):
         Check rate limit before passing event to handler.
         Пропускаем не-Message события (callback_query и т.д.) без ограничений.
         """
-        if not isinstance(event, Message):
-            return await handler(event, data)
-
-        user_id = event.from_user.id if event.from_user else None
+        user_id = getattr(getattr(event, 'from_user', None), 'id', None)
         if user_id is None:
             return await handler(event, data)
 

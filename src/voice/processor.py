@@ -24,6 +24,11 @@ from src.config.constants import (
     WHISPER_SUPPORTED_MODELS,
 )
 from src.config.paths import get_voice_tmp_dir
+
+try:
+    from faster_whisper import WhisperModel
+except ImportError:
+    WhisperModel = None  # type: ignore
 from src.config.settings import Settings
 
 

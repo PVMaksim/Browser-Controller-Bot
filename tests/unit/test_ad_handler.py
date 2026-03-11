@@ -37,13 +37,12 @@ class TestNotifyIfAdPlaying:
         bot = AsyncMock()
         with patch("src.player.ad_handler.is_ad_playing", AsyncMock(return_value=True)):
             await notify_if_ad_playing(page, bot, owner_id=99)
-        bot.send_message.assert_awaited_once_with(
-            99, pytest.approx(MagicMock(), abs=None),
-            parse_mode="HTML"
-        )
-        # Verify message mentions ad
-        text = bot.send_message.call_args[0][1]
-        assert "реклама" in text.lower() or "Реклама" in text
+        bot.send_message.assert_awaited_once()
+        call_args = bot.send_message.call_args
+        assert call_args[0][0] == 99
+        assert call_args[1]["parse_mode"] == "HTML"
+        text = call_args[0][1]
+        assert "реклама" in text.lower() or "реклам" in text.lower()
 
     @pytest.mark.asyncio
     async def test_does_not_send_when_no_ad(self):

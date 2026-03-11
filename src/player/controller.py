@@ -7,6 +7,7 @@ PlayerController — unified interface for all media operations.
 """
 
 import asyncio
+import asyncio as _asyncio_retry  # alias for test patching
 from datetime import datetime
 
 from aiogram import Bot

@@ -38,12 +38,12 @@ _NAV_MAPPINGS: list[VoiceMapping] = [
     VoiceMapping(
         pattern=r"открой\s+(.+)",
         command="open",
-        extract_arg=lambda m: m.group(1).strip(),
+        extract_arg=lambda m: _resolve_site(m.group(1).strip()),
     ),
     VoiceMapping(
         pattern=r"(?:зайди|перейди)\s+(?:на|в)\s+(.+)",
         command="open",
-        extract_arg=lambda m: m.group(1).strip(),
+        extract_arg=lambda m: _resolve_site(m.group(1).strip()),
     ),
     VoiceMapping(
         pattern=r"(?:найди|ищи|поищи|поиск)\s+(.+)",
@@ -140,7 +140,7 @@ _SYSTEM_MAPPINGS: list[VoiceMapping] = [
     ),
 ]
 
-_ALL_MAPPINGS = _NAV_MAPPINGS + _MEDIA_MAPPINGS + _SYSTEM_MAPPINGS
+_ALL_MAPPINGS = _MEDIA_MAPPINGS + _NAV_MAPPINGS + _SYSTEM_MAPPINGS
 
 # Словарь нормализации названий платформ
 _PLATFORM_ALIASES: dict[str, str] = {
@@ -157,6 +157,31 @@ _PLATFORM_ALIASES: dict[str, str] = {
     "ok": "ok",
 }
 
+
+
+# Псевдонимы сайтов для голосовых команд (аналог CommandParser._SITE_ALIASES)
+_SITE_ALIASES: dict[str, str] = {
+    "ютуб": "youtube.com",
+    "youtube": "youtube.com",
+    "yt": "youtube.com",
+    "гугл": "google.com",
+    "google": "google.com",
+    "вк": "vk.com",
+    "vk": "vk.com",
+    "яндекс": "yandex.ru",
+    "yandex": "yandex.ru",
+    "рутуб": "rutube.ru",
+    "rutube": "rutube.ru",
+    "твиттер": "twitter.com",
+    "twitter": "twitter.com",
+    "одноклассники": "ok.ru",
+    "ok": "ok.ru",
+}
+
+
+def _resolve_site(raw: str) -> str:
+    """Resolve Russian site alias to domain, or return raw if unknown."""
+    return _SITE_ALIASES.get(raw.lower().strip(), raw.strip())
 
 def _normalize_platform(raw: str) -> str:
     """Normalize Russian platform name to internal platform key."""

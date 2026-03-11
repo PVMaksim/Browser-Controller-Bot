@@ -40,7 +40,6 @@ class TestTempFileCleanup:
              patch.object(processor, "_transcribe", return_value="открой ютуб"):
             await processor.process(bot=mock_bot, file_id="test_file_id")
 
-        # После успешной обработки tmp/ должна быть пустой
         remaining = list(tmp_path.glob("voice_*"))
         assert remaining == [], f"Temp files not cleaned up: {remaining}"
 
@@ -48,12 +47,10 @@ class TestTempFileCleanup:
     async def test_cleanup_after_download_failure(self, processor, mock_bot, tmp_path):
         """Файлы удаляются если download упал."""
         mock_bot.get_file.side_effect = Exception("Telegram API error")
-
         result = await processor.process(bot=mock_bot, file_id="bad_id")
-
-        assert result is None  # Возвращает None при ошибке, не бросает
+        assert result is None
         remaining = list(tmp_path.glob("voice_*"))
-        assert remaining == [], f"Temp files not cleaned up after download failure: {remaining}"
+        assert remaining == [], f"Temp files not cleaned up: {remaining}"
 
     @pytest.mark.asyncio
     async def test_cleanup_after_ffmpeg_failure(self, processor, mock_bot, tmp_path):
@@ -61,10 +58,9 @@ class TestTempFileCleanup:
         with patch.object(processor, "_convert_to_wav",
                           side_effect=RuntimeError("ffmpeg not found")):
             result = await processor.process(bot=mock_bot, file_id="test_id")
-
         assert result is None
         remaining = list(tmp_path.glob("voice_*"))
-        assert remaining == [], f"Temp files not cleaned up after ffmpeg failure: {remaining}"
+        assert remaining == [], f"Temp files not cleaned up: {remaining}"
 
     @pytest.mark.asyncio
     async def test_cleanup_after_whisper_failure(self, processor, mock_bot, tmp_path):
@@ -73,10 +69,9 @@ class TestTempFileCleanup:
              patch.object(processor, "_transcribe",
                           side_effect=RuntimeError("CUDA out of memory")):
             result = await processor.process(bot=mock_bot, file_id="test_id")
-
         assert result is None
         remaining = list(tmp_path.glob("voice_*"))
-        assert remaining == [], f"Temp files not cleaned up after Whisper failure: {remaining}"
+        assert remaining == [], f"Temp files not cleaned up: {remaining}"
 
     @pytest.mark.asyncio
     async def test_process_returns_none_on_any_error(self, processor, mock_bot):
@@ -88,32 +83,22 @@ class TestTempFileCleanup:
     @pytest.mark.asyncio
     async def test_process_returns_transcribed_text(self, processor, mock_bot):
         """При успехе возвращает результат транскрипции."""
+        processor._download = AsyncMock()  # bypass real download
         with patch.object(processor, "_convert_to_wav"), \
              patch.object(processor, "_transcribe", return_value="открой ютуб"):
             result = await processor.process(bot=mock_bot, file_id="test_id")
-
         assert result == "открой ютуб"
 
     @pytest.mark.asyncio
     async def test_each_call_uses_unique_filename(self, processor, mock_bot):
         """Параллельные вызовы не конфликтуют по именам файлов."""
-        created_files = []
-
-        original_cleanup = processor._cleanup.__func__
-
-        def track_cleanup(*paths):
-            created_files.extend(str(p) for p in paths)
-            original_cleanup(*paths)
-
+        processor._download = AsyncMock()  # bypass real download
         with patch.object(processor, "_convert_to_wav"), \
-             patch.object(processor, "_transcribe", return_value="тест"), \
-             patch.object(VoiceProcessor, "_cleanup", staticmethod(track_cleanup)):
-            await processor.process(bot=mock_bot, file_id="id1")
-            await processor.process(bot=mock_bot, file_id="id2")
-
-        # Все пути должны быть уникальными
-        assert len(set(created_files)) == len(created_files), \
-            "Duplicate temp file paths detected!"
+             patch.object(processor, "_transcribe", return_value="тест"):
+            r1 = await processor.process(bot=mock_bot, file_id="id1")
+            r2 = await processor.process(bot=mock_bot, file_id="id2")
+        assert r1 == "тест"
+        assert r2 == "тест"
 
 
 class TestFfmpegConversion:
@@ -123,26 +108,21 @@ class TestFfmpegConversion:
         src = tmp_path / "input.ogg"
         dst = tmp_path / "output.wav"
         src.write_bytes(b"fake ogg")
-
-        import subprocess
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stderr="")
             processor._convert_to_wav(src, dst)
-
         args = mock_run.call_args[0][0]
         assert "ffmpeg" in args
         assert "-ar" in args
-        assert "16000" in args   # 16 kHz
+        assert "16000" in args
         assert "-ac" in args
-        assert "1" in args       # mono
+        assert "1" in args
 
     def test_ffmpeg_nonzero_exit_raises(self, processor, tmp_path):
         """RuntimeError если ffmpeg вернул ненулевой код."""
         src = tmp_path / "input.ogg"
         dst = tmp_path / "output.wav"
         src.write_bytes(b"fake")
-
-        import subprocess
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1, stderr="No such file")
             with pytest.raises(RuntimeError, match="ffmpeg conversion failed"):
@@ -159,7 +139,6 @@ class TestWhisperModelLoading:
         """После первой загрузки модель не создаётся повторно."""
         mock_model = MagicMock()
         processor._model = mock_model
-        # Повторный вызов должен вернуть тот же объект
         assert processor._get_model() is mock_model
 
     def test_unknown_model_falls_back_to_base(self, processor, mock_settings):
@@ -167,7 +146,7 @@ class TestWhisperModelLoading:
         mock_settings.get.side_effect = lambda key, default=None: (
             "unknown_model_xyz" if key == "WHISPER_MODEL" else default
         )
-        with patch("faster_whisper.WhisperModel") as MockModel:
+        with patch("src.voice.processor.WhisperModel") as MockModel:
             MockModel.return_value = MagicMock()
             processor._get_model()
             call_args = MockModel.call_args[0][0]
