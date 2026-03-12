@@ -74,6 +74,16 @@ def get_voice_tmp_dir() -> Path:
     return path
 
 
+def get_ocr_tmp_dir() -> Path:
+    """
+    Return temp directory for OCR image processing.
+    Файлы создаются здесь и гарантированно удаляются через finally.
+    """
+    path = Path("tmp") / "ocr"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def get_watch_history_file() -> Path:
     """Return path to watch history JSON file (Stage 4.5)."""
     return get_data_dir() / "watch_history.json"
