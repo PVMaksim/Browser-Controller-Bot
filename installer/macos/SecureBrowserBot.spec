@@ -12,6 +12,12 @@ ROOT = Path(SPECPATH).parent.parent  # корень проекта
 
 block_cipher = None
 
+import sys as _sys, sysconfig as _sc, os as _os
+_stdlib = _sc.get_path('stdlib')
+_plat_py = _os.path.join(_stdlib, 'platform.py')
+if not _os.path.exists(_plat_py):
+    _plat_py = _os.path.join(_os.path.dirname(_os.__file__), 'platform.py')
+
 a = Analysis(
     [str(ROOT / "src" / "main.py")],
     pathex=[str(ROOT)],
@@ -21,6 +27,8 @@ a = Analysis(
         (str(ROOT / ".env.example"), "."),
         # Иконка приложения
         (str(ROOT / "installer" / "macos" / "icon.icns"), "."),
+        # Real stdlib platform.py — fixes PyInstaller frozen stub bug
+        (_plat_py, '.'),
     ],
     hiddenimports=[
         # aiogram и его зависимости
