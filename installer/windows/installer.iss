@@ -57,21 +57,14 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 
 [Run]
 ; Установка ffmpeg через winget если не установлен
-Filename: "powershell.exe";
-    Parameters: "-Command \"if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) { winget install --id Gyan.FFmpeg --silent --accept-package-agreements --accept-source-agreements }\"";
-    Description: "Установить ffmpeg (необходим для голосовых команд)";
-    Flags: nowait postinstall skipifsilent runasoriginaluser
+Filename: "winget.exe"; Parameters: "install --id Gyan.FFmpeg --silent --accept-package-agreements --accept-source-agreements"; Description: "Установить ffmpeg (необходим для голосовых команд)"; Flags: nowait postinstall skipifsilent runasoriginaluser
 
 ; Запуск бота после установки
-Filename: "{app}\{#MyAppExeName}";
-    Description: "Запустить {#MyAppName}";
-    Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "Запустить {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 ; Остановить бот перед удалением
-Filename: "powershell.exe";
-    Parameters: "-Command ""Stop-Process -Name SecureBrowserBot -Force -ErrorAction SilentlyContinue""";
-    Flags: runhidden
+Filename: "powershell.exe"; Parameters: "-Command ""Stop-Process -Name SecureBrowserBot -Force -ErrorAction SilentlyContinue"""; Flags: runhidden
 
 [Code]
 // Проверяем наличие .NET / Visual C++ Redistributable при необходимости
