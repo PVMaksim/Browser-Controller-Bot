@@ -70,21 +70,44 @@ class PlayerController:
 
     async def search(self, query: str, platform: str | None = None) -> list[SearchResult]:
         """
-        Search for videos on the specified platform.
+        Search for videos on the specified platform with retry on empty/error.
         Результаты сохраняются в state.search_results для выбора по номеру кнопки.
         """
+        from src.config.constants import SEARCH_RETRY_COUNT, SEARCH_RETRY_DELAY_SEC
+
         platform = self._resolve_platform(platform)
         page = await self._get_page()
         plat_instance = self._get_platform(platform)
-
         limit = int(self._settings.get("SEARCH_RESULTS_LIMIT", DEFAULT_SEARCH_RESULTS_LIMIT))
-        results = await plat_instance.search(page, query)
-        results = results[:limit]
 
-        self.state.search_results = results
+        last_exc: BaseException | None = None
+        attempts = 1 + SEARCH_RETRY_COUNT  # total attempts
+
+        for attempt in range(attempts):
+            if attempt > 0:
+                await _asyncio_retry.sleep(SEARCH_RETRY_DELAY_SEC)
+            try:
+                results = await plat_instance.search(page, query)
+                if results:
+                    results = results[:limit]
+                    self.state.search_results = results
+                    self.state.platform = platform
+                    logger.info(f"Search '{query}' on {platform}: {len(results)} results (attempt {attempt + 1})")
+                    return results
+                logger.debug(f"Search attempt {attempt + 1}/{attempts}: 0 results for '{query}'")
+                last_exc = None
+            except Exception as exc:
+                logger.warning(f"Search attempt {attempt + 1}/{attempts} failed: {exc}")
+                last_exc = exc
+
+        # All attempts exhausted
+        if last_exc is not None:
+            raise last_exc
+
+        self.state.search_results = []
         self.state.platform = platform
-        logger.info(f"Search '{query}' on {platform}: {len(results)} results")
-        return results
+        logger.info(f"Search '{query}' on {platform}: 0 results after {attempts} attempts")
+        return []
 
     # ------------------------------------------------------------------ #
     # Open video                                                           #

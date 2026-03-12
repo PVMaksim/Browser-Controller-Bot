@@ -66,7 +66,7 @@ class RateLimiterMiddleware(BaseMiddleware):
         Пропускаем не-Message события (callback_query и т.д.) без ограничений.
         """
         user_id = getattr(getattr(event, 'from_user', None), 'id', None)
-        if user_id is None:
+        if not isinstance(user_id, int):
             return await handler(event, data)
 
         now = time.monotonic()
@@ -105,7 +105,7 @@ class RateLimiterMiddleware(BaseMiddleware):
         Send rate limit warning to user — at most once per notify_cooldown_sec.
         Не спамим предупреждениями — отправляем максимум раз в N секунд.
         """
-        last = self._last_notified.get(user_id, 0)
+        last = self._last_notified.get(user_id, float('-inf'))
         if now - last < self._notify_cooldown_sec:
             return
 

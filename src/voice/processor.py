@@ -151,8 +151,6 @@ class VoiceProcessor:
                 model_name = DEFAULT_WHISPER_MODEL
 
             logger.info(f"Loading Whisper model: {model_name} (first voice message)")
-            from faster_whisper import WhisperModel
-
             # cpu + int8 — оптимально для Mac без GPU; float16 требует CUDA
             self._model = WhisperModel(model_name, device="cpu", compute_type="int8")
             logger.info(f"Whisper model '{model_name}' loaded")
