@@ -5,6 +5,21 @@ macOS: menu bar icon + system notification в режиме onboarding.
 Windows: корректно запускается как NSSM-сервис.
 """
 
+# ── PyInstaller fix: restore missing platform attributes ──────────────────────
+# PyInstaller bundles a stub platform module that lacks python_implementation(),
+# mac_ver(), etc. Patch them before any library (aiogram, etc.) imports platform.
+import platform as _platform
+if not hasattr(_platform, 'python_implementation'):
+    _platform.python_implementation = lambda: 'CPython'
+if not hasattr(_platform, 'mac_ver'):
+    _platform.mac_ver = lambda terse=False: ('', ('', '', ''), '')
+if not hasattr(_platform, 'win32_ver'):
+    _platform.win32_ver = lambda release='', version='', csd='', ptype='': (release, version, csd, ptype)
+if not hasattr(_platform, 'python_version'):
+    import sys as _sys
+    _platform.python_version = lambda: '.'.join(str(x) for x in _sys.version_info[:3])
+# ─────────────────────────────────────────────────────────────────────────────
+
 import asyncio
 import sys
 
