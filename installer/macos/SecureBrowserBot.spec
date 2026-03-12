@@ -39,6 +39,9 @@ a = Analysis(
         "loguru",
         "dotenv",
         "psutil",
+        "setuptools",
+        "pkg_resources",
+        "platform",
         # rumps (опционально)
         "rumps",
         # Все платформенные модули
@@ -53,7 +56,7 @@ a = Analysis(
     ],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=[str(ROOT / 'installer' / 'macos' / 'rthook_platform.py')],
     excludes=[
         # Исключаем тяжёлые неиспользуемые пакеты
         "tkinter",
