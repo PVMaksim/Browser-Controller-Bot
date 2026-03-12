@@ -53,11 +53,7 @@ Name: "{group}\Удалить {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Registry]
 ; Автозапуск через реестр (если пользователь выбрал задачу autostart)
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run";
-    ValueType: string; ValueName: "{#MyAppName}";
-    ValueData: "{app}\{#MyAppExeName}";
-    Flags: uninsdeletevalue;
-    Tasks: autostart
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#MyAppName}"; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletevalue; Tasks: autostart
 
 [Run]
 ; Установка ffmpeg через winget если не установлен
