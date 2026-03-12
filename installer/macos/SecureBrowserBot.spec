@@ -53,7 +53,7 @@ a = Analysis(
     ],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[str(ROOT / 'installer' / 'macos' / 'rthook_platform.py')],
+    runtime_hooks=[str(ROOT / 'installer' / 'macos' / 'rthook_aaa_platform.py')],
     excludes=[
         # Исключаем тяжёлые неиспользуемые пакеты
         "tkinter",
