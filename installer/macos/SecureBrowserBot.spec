@@ -39,9 +39,6 @@ a = Analysis(
         "loguru",
         "dotenv",
         "psutil",
-        "setuptools",
-        "pkg_resources",
-        "platform",
         # rumps (опционально)
         "rumps",
         # Все платформенные модули
@@ -64,6 +61,8 @@ a = Analysis(
         "numpy",
         "scipy",
         "pandas",
+        "pkg_resources",
+        "setuptools",
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,

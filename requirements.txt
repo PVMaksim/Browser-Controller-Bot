@@ -17,3 +17,4 @@ loguru==0.7.3
 
 # System monitoring (Stage 4.5)
 psutil==6.1.1
+setuptools<70.0
