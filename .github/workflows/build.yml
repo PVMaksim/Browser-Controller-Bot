@@ -41,46 +41,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
       - name: Patch aiogram Router for PyInstaller compatibility
-        run: |
-          python3 - << 'PYEOF'
-import glob, os
-# Find router.py in site-packages
-patterns = [
-    "/Users/runner/hostedtoolcache/Python/3.11.*/arm64/lib/python3.11/site-packages/aiogram/dispatcher/router.py",
-    "/usr/local/lib/python3.11/site-packages/aiogram/dispatcher/router.py",
-    "/usr/lib/python3.11/site-packages/aiogram/dispatcher/router.py",
-]
-found = []
-for p in patterns:
-    found.extend(glob.glob(p))
-if not found:
-    import subprocess
-    r = subprocess.run(["python3", "-c", "import aiogram.dispatcher.router as m; print(m.__file__)"],
-                       capture_output=True, text=True)
-    if r.returncode == 0:
-        found = [r.stdout.strip()]
-for router_py in found:
-    print(f"Patching {router_py}")
-    src = open(router_py).read()
-    old = '''    def include_router(self, router: "Router") -> "Router":
-        if not isinstance(router, Router):
-            raise ValueError(
-                f"router should be instance of Router not type"
-            )'''
-    new = '''    def include_router(self, router: "Router") -> "Router":
-        if not isinstance(router, Router):
-            if type(router).__name__ == "Router" and hasattr(router, "observers"):
-                pass  # duck-type: same class from different import path (PyInstaller)
-            else:
-                raise ValueError(
-                    f"router should be instance of Router not type"
-                )'''
-    if old in src:
-        open(router_py, "w").write(src.replace(old, new))
-        print(f"  ✅ Patched successfully")
-    else:
-        print(f"  ⚠️  Pattern not found, skipping")
-PYEOF
+        run: python3 scripts/patch_aiogram_router.py
 
       - name: Build .dmg
         run: |
