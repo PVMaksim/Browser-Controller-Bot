@@ -29,22 +29,34 @@ _p('uname',                 lambda: ('','','','','',''))
 _p('platform',              lambda aliased=False, terse=False: '')
 del _p
 
-# ── Fix 2: patch Router.include_router BEFORE main.py imports anything ────────
-# PyInstaller with noarchive can still create two import paths for aiogram.
-# Patch the check in-place so duck-typed Routers are accepted.
+# ── Fix 2: patch aiogram Router.include_router ────────────────────────────────
 try:
     import aiogram.dispatcher.router as _r
-    _original = _r.Router.include_router
 
-    def _patched(self, router, **kw):
-        if not isinstance(router, _r.Router):
-            # Accept any object that has Router's key attributes
-            if hasattr(router, 'observers') and hasattr(router, 'include_router'):
+    def _patched(self, router):
+        # Log diagnostics to help debug
+        import sys as _sys
+        _is = isinstance(router, _r.Router)
+        _name = type(router).__name__
+        _mod = type(router).__module__
+        _mro = [c.__name__ for c in type(router).__mro__]
+        print(f"[RTHOOK DEBUG] include_router called:"
+              f" isinstance={_is}, name={_name}, module={_mod}, mro={_mro}",
+              file=_sys.stderr, flush=True)
+
+        if not _is:
+            # Force class identity — same structure, different class object
+            try:
                 router.__class__ = _r.Router
-            else:
-                raise ValueError("router should be instance of Router not type")
-        return _original(self, router, **kw)
+                print("[RTHOOK DEBUG] __class__ reassigned OK", file=_sys.stderr)
+            except TypeError as e:
+                print(f"[RTHOOK DEBUG] __class__ reassign failed: {e}", file=_sys.stderr)
+                raise ValueError("router should be instance of Router not type") from e
 
+        return _r.Router._orig_include(self, router)
+
+    _r.Router._orig_include = _r.Router.include_router
     _r.Router.include_router = _patched
-except Exception:
-    pass
+except Exception as e:
+    import sys as _sys
+    print(f"[RTHOOK DEBUG] patch failed: {e}", file=_sys.stderr)
