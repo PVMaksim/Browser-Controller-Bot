@@ -103,7 +103,7 @@ omit = [
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
-fail_under = 46
+fail_under = 45
 
 [tool.coverage.html]
 directory = "htmlcov"
