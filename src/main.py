@@ -5,7 +5,49 @@ macOS: menu bar icon + system notification в режиме onboarding.
 Windows: корректно запускается как NSSM-сервис.
 """
 
-# (PyInstaller Router patch applied in rthook_aaa_platform.py)
+# ── PyInstaller fix: patch Dispatcher.include_router at import time ───────────
+import sys as _sys
+import aiogram.dispatcher.router as _adr
+import aiogram.dispatcher.dispatcher as _add
+
+def _force_include_router(self, router):
+    """
+    Drop-in for Router.include_router that accepts routers from any import path.
+    Fixes PyInstaller double-import where isinstance(router, Router) == False
+    even though router IS a Router, just from a different sys.modules entry.
+    """
+    Router = type(self)
+    # Accept if real Router or duck-typed Router (same attrs, different class obj)
+    if not isinstance(router, _adr.Router):
+        if not (hasattr(router, 'observers') and hasattr(router, '_parent')):
+            raise ValueError("router should be instance of Router not type")
+        # Remap the frozen module so both sides see the same class
+        mod_name = type(router).__module__
+        if mod_name in _sys.modules:
+            _sys.modules[mod_name].Router = _adr.Router
+        # Re-instantiate as the canonical Router
+        canonical = _adr.Router.__new__(_adr.Router)
+        canonical.__dict__.update(router.__dict__)
+        router = canonical
+
+    # Inline the real include_router logic (avoids calling self which would recurse)
+    if router._parent is not None:
+        raise RuntimeError(
+            f"Router [{router!r}] is already attached to another router [{router._parent!r}]."
+        )
+    router._parent = self
+    self._routers.append(router)
+    # Propagate parent's filters to child
+    for name, observer in router.observers.items():
+        if name in self.observers:
+            for f in self.observers[name].filters:
+                observer.filter(f)
+    return router
+
+_adr.Router.include_router = _force_include_router
+if hasattr(_add, 'Dispatcher'):
+    _add.Dispatcher.include_router = _force_include_router
+# ─────────────────────────────────────────────────────────────────────────────
 
 import asyncio
 import sys
