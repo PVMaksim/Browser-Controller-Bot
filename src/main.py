@@ -12,38 +12,24 @@ import aiogram.dispatcher.dispatcher as _add
 
 def _force_include_router(self, router):
     """
-    Drop-in for Router.include_router that accepts routers from any import path.
-    Fixes PyInstaller double-import where isinstance(router, Router) == False
-    even though router IS a Router, just from a different sys.modules entry.
+    Drop-in for Router.include_router.
+    Fixes PyInstaller double-import: isinstance(router, Router) fails when
+    aiogram is loaded from two different paths, producing two class objects.
+    We unify the class, then call the original implementation.
     """
-    Router = type(self)
-    # Accept if real Router or duck-typed Router (same attrs, different class obj)
     if not isinstance(router, _adr.Router):
-        if not (hasattr(router, 'observers') and hasattr(router, '_parent')):
+        if type(router).__name__ == 'Router':
+            # PyInstaller double-import: force canonical class, then proceed
+            try:
+                router.__class__ = _adr.Router
+            except TypeError:
+                pass
+        else:
             raise ValueError("router should be instance of Router not type")
-        # Remap the frozen module so both sides see the same class
-        mod_name = type(router).__module__
-        if mod_name in _sys.modules:
-            _sys.modules[mod_name].Router = _adr.Router
-        # Re-instantiate as the canonical Router
-        canonical = _adr.Router.__new__(_adr.Router)
-        canonical.__dict__.update(router.__dict__)
-        router = canonical
+    # Call the real implementation now that isinstance will pass
+    return _adr.Router._orig_include_router(self, router)
 
-    # Inline the real include_router logic (avoids calling self which would recurse)
-    if router._parent is not None:
-        raise RuntimeError(
-            f"Router [{router!r}] is already attached to another router [{router._parent!r}]."
-        )
-    router._parent = self
-    self._routers.append(router)
-    # Propagate parent's filters to child
-    for name, observer in router.observers.items():
-        if name in self.observers:
-            for f in self.observers[name].filters:
-                observer.filter(f)
-    return router
-
+_adr.Router._orig_include_router = _adr.Router.include_router
 _adr.Router.include_router = _force_include_router
 if hasattr(_add, 'Dispatcher'):
     _add.Dispatcher.include_router = _force_include_router
