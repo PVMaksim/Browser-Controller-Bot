@@ -33,6 +33,8 @@ a = Analysis(
         (str(ROOT / "installer" / "macos" / "icon.icns"), "."),
         # Real stdlib platform.py — fixes PyInstaller frozen stub bug
         (_plat_py, '.'),
+        # sitecustomize.py runs before all user code and patches aiogram Router
+        (str(ROOT / 'installer' / 'macos' / 'sitecustomize.py'), '.'),
     ],
     hiddenimports=[
         # aiogram traced automatically by PyInstaller

@@ -2,7 +2,7 @@
 import sys
 import os
 
-# ── Fix 1: restore stdlib platform attributes ─────────────────────────────────
+# ── Restore stdlib platform attributes ────────────────────────────────────────
 import platform as _platform
 def _p(name, fn):
     if not hasattr(_platform, name):
@@ -29,21 +29,12 @@ _p('uname',                 lambda: ('','','','','',''))
 _p('platform',              lambda aliased=False, terse=False: '')
 del _p
 
-# ── Fix 2: strip external site-packages so aiogram loads from bundle ONLY ─────
-# When user has Python + aiogram installed system-wide, PyInstaller bundles its
-# own copy in Frameworks/ but sys.path still contains system site-packages.
-# Python then loads aiogram twice → two Router class objects → isinstance fails.
+# ── Strip system site-packages so aiogram loads ONLY from the bundle ──────────
 if hasattr(sys, '_MEIPASS'):
-    meipass = sys._MEIPASS
-    cleaned = []
-    for p in sys.path:
-        norm = os.path.normpath(p)
-        # Keep: _MEIPASS itself, stdlib paths, empty string (cwd)
-        # Drop: anything containing 'site-packages' or 'dist-packages'
-        if 'site-packages' in norm or 'dist-packages' in norm:
-            continue
-        cleaned.append(p)
-    # Always keep _MEIPASS first
-    if meipass not in cleaned:
-        cleaned.insert(0, meipass)
-    sys.path[:] = cleaned
+    _meipass = sys._MEIPASS
+    sys.path[:] = [
+        p for p in sys.path
+        if 'site-packages' not in p and 'dist-packages' not in p
+    ]
+    if _meipass not in sys.path:
+        sys.path.insert(0, _meipass)
