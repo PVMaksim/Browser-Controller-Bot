@@ -12,6 +12,10 @@ ROOT = Path(SPECPATH).parent.parent  # корень проекта
 
 block_cipher = None
 
+from PyInstaller.utils.hooks import collect_all
+aiogram_datas, aiogram_binaries, aiogram_hiddenimports = collect_all('aiogram')
+
+
 import sys as _sys, sysconfig as _sc, os as _os
 _stdlib = _sc.get_path('stdlib')
 _plat_py = _os.path.join(_stdlib, 'platform.py')
@@ -21,8 +25,8 @@ if not _os.path.exists(_plat_py):
 a = Analysis(
     [str(ROOT / "src" / "main.py")],
     pathex=[str(ROOT)],
-    binaries=[],
-    datas=[
+    binaries=aiogram_binaries,
+    datas=aiogram_datas + [
         # Включаем шаблон конфига
         (str(ROOT / ".env.example"), "."),
         # Иконка приложения
@@ -31,12 +35,8 @@ a = Analysis(
         (_plat_py, '.'),
     ],
     hiddenimports=[
-        # aiogram и его зависимости
-        "aiogram",
-        "aiogram.client",
-        "aiogram.types",
-        "aiogram.filters",
-        "aiogram.fsm",
+        # aiogram traced automatically by PyInstaller
+        *aiogram_hiddenimports,
         # Playwright
         "playwright",
         "playwright.async_api",
