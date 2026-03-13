@@ -4,6 +4,8 @@ Telegram-бот, который устанавливается на твой Mac
 
 Управляй браузером, ищи и смотри видео, управляй компьютером — голосом или текстом.
 
+> **Текущая версия: v1.1.1** · [Скачать DMG / EXE](../../releases/latest)
+
 ---
 
 ## Возможности
@@ -87,9 +89,21 @@ python src/main.py
 ## Первый запуск
 
 1. Создай бота у [@BotFather](https://t.me/BotFather) → скопируй токен
-2. Добавь токен в конфиг (`.env` или диалог первого запуска)
+2. Для **установленного приложения** — создай `config.json`:
+   ```bash
+   open -e ~/Library/Application\ Support/SecureBrowserBot/config.json
+   ```
+   Вставь:
+   ```json
+   {
+     "BOT_TOKEN": "1234567890:AAF...",
+     "OWNER_ID": "123456789"
+   }
+   ```
 3. Запусти приложение
 4. Напиши своему боту `/register` — ты станешь единственным владельцем
+
+> Свой Telegram ID можно узнать у [@userinfobot](https://t.me/userinfobot)
 
 Подробнее: [docs/onboarding_flow.md](docs/onboarding_flow.md)
 

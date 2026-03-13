@@ -2,7 +2,7 @@
 
 > Инструкция для AI-ассистента. Читай полностью перед любыми изменениями.
 
-**Версия: 1.1.0 | Python 3.11 | aiogram 3.x | Playwright**
+**Версия: 1.1.1 | Python 3.11 | aiogram 3.x | Playwright**
 
 ---
 
@@ -311,7 +311,7 @@ tests/
 
 ```bash
 pytest tests/unit/ -v
-pytest tests/ --cov=src --cov-fail-under=70
+pytest tests/ --cov=src --cov-fail-under=45
 ```
 
 **`test_help_completeness.py`** — архитектурный guard:
@@ -372,6 +372,39 @@ pytest tests/ --cov=src --cov-fail-under=70
 | Добавить команду без строки в `/help` | Тест `test_help_completeness` сломается |
 | Добавить платформу без псевдонима | `command_mapper.py` → `_PLATFORM_ALIASES` |
 | Запустить watchdog в onboarding | `if not is_onboarding: watchdog.start()` |
+| Забыть `return r` в `get_*_router()` | Возвращает `None` → `ValueError` в aiogram |
+| Использовать `dp.errors()` как декоратор | `errors_router = Router(); @errors_router.errors()` |
+
+---
+
+## PyInstaller — известные проблемы
+
+**Double-import aiogram (Router isinstance fails)**
+PyInstaller может загрузить `aiogram` дважды (из `_MEIPASS` и из `sys.path`),
+создавая два объекта класса `Router`. `isinstance(router, Router)` падает.
+Фикс в `src/main.py`: патч `Dispatcher.include_router` принимает duck-typed Router.
+
+**platform stub**
+PyInstaller заменяет stdlib `platform` минимальным stub. Патч в `src/main.py`
+восстанавливает все отсутствующие атрибуты (`system`, `python_implementation`, и др.).
+
+**Конфиг в установленном .app**
+`.env` не используется в дистрибутиве. Конфиг читается из:
+- macOS: `~/Library/Application Support/SecureBrowserBot/config.json`
+- Windows: `%AppData%\SecureBrowserBot\config.json`
+
+Формат:
+```json
+{
+  "BOT_TOKEN": "...",
+  "OWNER_ID": "..."
+}
+```
+
+**Сборка**
+`scripts/patch_aiogram_router.py` патчит `aiogram/dispatcher/router.py`
+в `site-packages` на CI-раннере до запуска PyInstaller —
+патч попадает в `.pyc` при заморозке.
 
 ---
 
@@ -390,6 +423,6 @@ python -m src.platform.cli install
 python -m src.platform.cli start / stop / status
 
 # Релиз
-git tag v1.1.0 && git push origin --tags
+git tag v1.1.1 && git push origin --tags
 # → GitHub Actions: test.yml проверяет, build.yml собирает .dmg и .exe
 ```

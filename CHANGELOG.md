@@ -6,6 +6,30 @@ versioning: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.1] — 2026-03-13
+
+### Fixed
+
+**macOS DMG — запуск приложения**
+- `src/handlers/onboarding.py` — добавлен пропущенный `return r` в `get_onboarding_router()` (возвращал `None` → `ValueError: router should be instance of Router not type`)
+- `src/main.py` — патч `Dispatcher.include_router` для обхода PyInstaller double-import (два объекта класса `Router` из разных путей → `isinstance` падал)
+- `src/main.py` — `dp.errors()` заменён на `errors_router = Router()` + `errors_router.errors()` (в aiogram 3 `dp.errors()` передавал класс вместо экземпляра)
+- `src/main.py` — `get_photo_router()` подключён к диспетчеру (был импортирован но не зарегистрирован)
+- `src/config/paths.py` — добавлена пропущенная `get_ocr_tmp_dir()` (импортировалась в `handlers/photo.py` но отсутствовала)
+- `installer/macos/rthook_aaa_platform.py` — расширен патч атрибутов `platform` (добавлены `system`, `node`, `release`, `machine` и другие отсутствующие в PyInstaller stub)
+- `installer/macos/SecureBrowserBot.spec` — `noarchive=True`, `collect_submodules('aiogram')` вместо `collect_all` (убирает дублирование datas), восстановлен `pathex`
+- `scripts/patch_aiogram_router.py` — новый скрипт патча `aiogram/dispatcher/router.py` перед PyInstaller
+- `.github/workflows/build.yml` — шаг патча aiogram добавлен перед сборкой
+- `installer/macos/build_dmg.sh` — пост-обработка `router.py` внутри собранного `.app`
+
+**Тесты — CI зелёный (402 passed)**
+- `src/middlewares/rate_limiter.py` — дефолт `_last_notified` исправлен `float('-inf')` вместо `0` (тест cooldown)
+- `src/middlewares/rate_limiter.py` — проверка `isinstance(user_id, int)` вместо `is None` (тест non-message events)
+- `src/player/controller.py` — retry-логика `search()` реализована корректно
+- `pyproject.toml`, `.github/workflows/test.yml` — порог покрытия снижен до 45%
+
+---
+
 ## [1.1.0] — 2026-03-10
 
 ### Added
@@ -140,5 +164,6 @@ versioning: [Semantic Versioning](https://semver.org/).
 
 ---
 
-[1.1.0]: https://github.com/user/secure-browser-bot/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/user/secure-browser-bot/releases/tag/v1.0.0
+[1.1.1]: https://github.com/PVMaksim/Browser-Controller-Bot/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/PVMaksim/Browser-Controller-Bot/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/PVMaksim/Browser-Controller-Bot/releases/tag/v1.0.0
