@@ -5,37 +5,20 @@ macOS: menu bar icon + system notification в режиме onboarding.
 Windows: корректно запускается как NSSM-сервис.
 """
 
-# ── PyInstaller fix: restore missing platform attributes ──────────────────────
-# PyInstaller's bootloader replaces stdlib platform with a minimal stub.
-# Patch ALL missing attributes before any library import touches platform.
+# ── PyInstaller fix: patch aiogram Router isinstance check ────────────────────
 import sys as _sys
-import platform as _platform
-
-def _p(name, fn):
-    if not hasattr(_platform, name):
-        setattr(_platform, name, fn)
-
-_p('system',                lambda: 'Darwin' if _sys.platform == 'darwin' else ('Windows' if _sys.platform == 'win32' else 'Linux'))
-_p('node',                  lambda: '')
-_p('release',               lambda: '')
-_p('version',               lambda: '')
-_p('machine',               lambda: _sys.platform)
-_p('processor',             lambda: '')
-_p('architecture',          lambda bits='', linkage='': (bits, linkage))
-_p('python_implementation', lambda: 'CPython')
-_p('python_version',        lambda: '.'.join(str(x) for x in _sys.version_info[:3]))
-_p('python_version_tuple',  lambda: tuple(str(x) for x in _sys.version_info[:3]))
-_p('python_build',          lambda: ('', ''))
-_p('python_compiler',       lambda: '')
-_p('python_branch',         lambda: '')
-_p('python_revision',       lambda: '')
-_p('mac_ver',               lambda terse=False, release='', versioninfo=('','',''), machine='': (release, versioninfo, machine))
-_p('win32_ver',             lambda release='', version='', csd='', ptype='': (release, version, csd, ptype))
-_p('win32_edition',         lambda: '')
-_p('win32_is_iot',          lambda: False)
-_p('uname',                 lambda: _platform.uname_result('','','','','','') if hasattr(_platform,'uname_result') else ('','','','','',''))
-_p('platform',              lambda aliased=False, terse=False: '')
-del _p
+if hasattr(_sys, '_MEIPASS'):
+    try:
+        import aiogram.dispatcher.router as _r
+        _OrigInclude = _r.Router.include_router
+        def _safe_include(self, router, **kwargs):
+            if not isinstance(router, _r.Router):
+                if type(router).__name__ == 'Router' and hasattr(router, 'observers'):
+                    router.__class__ = _r.Router
+            return _OrigInclude(self, router, **kwargs)
+        _r.Router.include_router = _safe_include
+    except Exception:
+        pass
 # ─────────────────────────────────────────────────────────────────────────────
 
 import asyncio
