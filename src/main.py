@@ -15,18 +15,23 @@ def _force_include_router(self, router):
     Drop-in for Router.include_router.
     Fixes PyInstaller double-import: isinstance(router, Router) fails when
     aiogram is loaded from two different paths, producing two class objects.
-    We unify the class, then call the original implementation.
     """
+    import sys as _sys2
     if not isinstance(router, _adr.Router):
-        if type(router).__name__ == 'Router':
-            # PyInstaller double-import: force canonical class, then proceed
+        rname = type(router).__name__
+        rmod  = type(router).__module__
+        rmro  = [c.__name__ for c in type(router).__mro__]
+        # Print to stderr so it shows in terminal output
+        print(f"[DBG] include_router: name={rname} mod={rmod} mro={rmro}",
+              file=_sys2.stderr, flush=True)
+        if rname == 'Router':
             try:
                 router.__class__ = _adr.Router
-            except TypeError:
-                pass
+            except TypeError as _te:
+                print(f"[DBG] __class__ failed: {_te}", file=_sys2.stderr, flush=True)
         else:
+            print(f"[DBG] NOT Router — raising", file=_sys2.stderr, flush=True)
             raise ValueError("router should be instance of Router not type")
-    # Call the real implementation now that isinstance will pass
     return _adr.Router._orig_include_router(self, router)
 
 _adr.Router._orig_include_router = _adr.Router.include_router
