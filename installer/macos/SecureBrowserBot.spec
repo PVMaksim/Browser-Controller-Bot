@@ -12,8 +12,8 @@ ROOT = Path(SPECPATH).parent.parent  # корень проекта
 
 block_cipher = None
 
-from PyInstaller.utils.hooks import collect_all
-aiogram_datas, aiogram_binaries, aiogram_hiddenimports = collect_all('aiogram')
+from PyInstaller.utils.hooks import collect_submodules
+aiogram_hiddenimports = collect_submodules('aiogram')
 
 
 import sys as _sys, sysconfig as _sc, os as _os
@@ -25,8 +25,8 @@ if not _os.path.exists(_plat_py):
 a = Analysis(
     [str(ROOT / "src" / "main.py")],
     pathex=[str(ROOT)],
-    binaries=aiogram_binaries,
-    datas=aiogram_datas + [
+    binaries=[],
+    datas=[
         # Включаем шаблон конфига
         (str(ROOT / ".env.example"), "."),
         # Иконка приложения
