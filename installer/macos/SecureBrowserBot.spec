@@ -76,6 +76,7 @@ a = Analysis(
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
+    module_collection_mode={'aiogram': 'py', 'src': 'py'},
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
