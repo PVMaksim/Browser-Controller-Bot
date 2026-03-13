@@ -33,6 +33,41 @@ if [ ! -d "$APP_PATH" ]; then
 fi
 echo "✅ .app собран: $APP_PATH"
 
+# ── Шаг 1.5: Patch aiogram Router inside .app to fix isinstance check ────────
+echo ""
+echo "🔧 [1.5/4] Patching aiogram Router.include_router inside .app..."
+ROUTER_PY="$APP_PATH/Contents/Frameworks/aiogram/dispatcher/router.py"
+if [ -f "$ROUTER_PY" ]; then
+    python3 - "$ROUTER_PY" << 'PYEOF'
+import sys
+path = sys.argv[1]
+src = open(path).read()
+old = '''    def include_router(self, router: "Router") -> "Router":
+        if not isinstance(router, Router):
+            raise ValueError(
+                f"router should be instance of Router not type"
+            )'''
+new = '''    def include_router(self, router: "Router") -> "Router":
+        if not isinstance(router, Router):
+            # Duck-type fallback: accept same-named class from different import path
+            if type(router).__name__ == "Router" and hasattr(router, "observers"):
+                pass  # allow through
+            else:
+                raise ValueError(
+                    f"router should be instance of Router not type"
+                )'''
+if old in src:
+    open(path, 'w').write(src.replace(old, new))
+    print(f"  ✅ Patched: {path}")
+else:
+    print(f"  ⚠️  Pattern not found in {path}, skipping patch")
+PYEOF
+else
+    echo "  ⚠️  router.py not found at $ROUTER_PY (noarchive may be off)"
+fi
+
+
+
 # ── Шаг 2: Проверяем наличие create-dmg ───────────────────────────
 echo ""
 echo "🔍 [2/4] Проверка зависимостей..."
