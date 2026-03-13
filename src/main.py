@@ -35,7 +35,7 @@ if hasattr(_add, 'Dispatcher'):
 import asyncio
 import sys
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from loguru import logger
@@ -105,6 +105,11 @@ async def main() -> None:
 
     ocr_processor = OCRProcessor(settings=settings)
 
+    # Watchdog создаётся ДО регистрации роутеров — он нужен get_command_router
+    owner_id_raw2 = settings.get("ALLOWED_USER_ID", "0")
+    owner_id2 = int(owner_id_raw2) if owner_id_raw2 and owner_id_raw2.isdigit() else 0
+    watchdog = BrowserWatchdog(browser=browser, settings=settings, bot=bot, owner_id=owner_id2)
+
     # Rate limiter — отбрасываем флуд до обработки роутерами
     dp.message.middleware(RateLimiterMiddleware())
 
@@ -141,10 +146,7 @@ async def main() -> None:
     # Menu bar icon (macOS only, no-op on Windows/Linux)
     _start_menu_bar(bot=bot, browser=browser, idle_watcher=idle_watcher, player=player)
 
-    # Watchdog — запускаем после browser.start()
-    owner_id_raw = settings.get("ALLOWED_USER_ID", "0")
-    owner_id = int(owner_id_raw) if owner_id_raw and owner_id_raw.isdigit() else 0
-    watchdog = BrowserWatchdog(browser=browser, settings=settings, bot=bot, owner_id=owner_id)
+    # Watchdog — запускаем после регистрации роутеров
     if not is_onboarding:
         watchdog.start()
 
