@@ -24,7 +24,7 @@ if not _os.path.exists(_plat_py):
 
 a = Analysis(
     [str(ROOT / "src" / "main.py")],
-    pathex=[],
+    pathex=[str(ROOT)],
     binaries=[],
     datas=[
         # Включаем шаблон конфига
