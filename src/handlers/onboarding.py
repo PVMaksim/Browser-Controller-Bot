@@ -87,3 +87,5 @@ def get_onboarding_router(settings: Settings, bot: Bot) -> Router:
         # Перезапускаем event loop — бот перечитает конфиг при следующем запуске
         # launchd / KeepAlive=true поднимет процесс автоматически
         asyncio.get_event_loop().stop()
+
+    return r
