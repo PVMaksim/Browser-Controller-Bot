@@ -5,21 +5,7 @@ macOS: menu bar icon + system notification в режиме onboarding.
 Windows: корректно запускается как NSSM-сервис.
 """
 
-# ── PyInstaller fix: patch aiogram Router isinstance check ────────────────────
-import sys as _sys
-if hasattr(_sys, '_MEIPASS'):
-    try:
-        import aiogram.dispatcher.router as _r
-        _OrigInclude = _r.Router.include_router
-        def _safe_include(self, router, **kwargs):
-            if not isinstance(router, _r.Router):
-                if type(router).__name__ == 'Router' and hasattr(router, 'observers'):
-                    router.__class__ = _r.Router
-            return _OrigInclude(self, router, **kwargs)
-        _r.Router.include_router = _safe_include
-    except Exception:
-        pass
-# ─────────────────────────────────────────────────────────────────────────────
+# (PyInstaller Router patch applied in rthook_aaa_platform.py)
 
 import asyncio
 import sys

@@ -29,20 +29,22 @@ _p('uname',                 lambda: ('','','','','',''))
 _p('platform',              lambda aliased=False, terse=False: '')
 del _p
 
-# ── Fix 2: deduplicate sys.path so aiogram loads from exactly ONE location ────
-if hasattr(sys, '_MEIPASS'):
-    meipass = sys._MEIPASS
-    seen = set()
-    clean = []
-    for p in sys.path:
-        np = os.path.normcase(os.path.normpath(p))
-        if np not in seen:
-            seen.add(np)
-            clean.append(p)
-    sys.path[:] = clean
+# ── Fix 2: patch Router.include_router BEFORE main.py imports anything ────────
+# PyInstaller with noarchive can still create two import paths for aiogram.
+# Patch the check in-place so duck-typed Routers are accepted.
+try:
+    import aiogram.dispatcher.router as _r
+    _original = _r.Router.include_router
 
-    # Pre-import aiogram to establish canonical Router class before any handler imports
-    try:
-        import aiogram.dispatcher.router  # noqa
-    except Exception:
-        pass
+    def _patched(self, router, **kw):
+        if not isinstance(router, _r.Router):
+            # Accept any object that has Router's key attributes
+            if hasattr(router, 'observers') and hasattr(router, 'include_router'):
+                router.__class__ = _r.Router
+            else:
+                raise ValueError("router should be instance of Router not type")
+        return _original(self, router, **kw)
+
+    _r.Router.include_router = _patched
+except Exception:
+    pass
