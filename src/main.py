@@ -124,8 +124,13 @@ async def main() -> None:
     dp.include_router(get_voice_router(settings=settings, bot=bot, browser=browser,
                                         idle_watcher=idle_watcher,
                                         voice_processor=voice_processor, player=player))
+    dp.include_router(get_photo_router(settings=settings, bot=bot,
+                                       ocr_processor=ocr_processor))
 
-    @dp.errors()
+    # Global error handler (aiogram 3 compatible)
+    errors_router = Router()
+
+    @errors_router.errors()
     async def global_error_handler(event, exception: Exception) -> bool:
         logger.exception(f"Unhandled error: {exception}")
         try:
@@ -136,6 +141,8 @@ async def main() -> None:
         except Exception:
             pass
         return True
+
+    dp.include_router(errors_router)
 
     # Menu bar icon (macOS only, no-op on Windows/Linux)
     _start_menu_bar(bot=bot, browser=browser, idle_watcher=idle_watcher, player=player)
