@@ -12,7 +12,7 @@ import asyncio
 
 from aiogram import Bot, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from loguru import logger
 
 from src.config.settings import Settings
@@ -77,8 +77,12 @@ def get_onboarding_router(settings: Settings, bot: Bot) -> Router:
             await message.answer("❌ Ошибка регистрации. Попробуй ещё раз.")
             return
 
-        # Отправляем подтверждение и перезапускаем
-        await message.answer(get_registration_success_text(user_id))
+        # Кнопка «Начать работу» сразу после регистрации
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🚀 Начать работу", callback_data="show_help"),
+        ]])
+
+        await message.answer(get_registration_success_text(user_id), reply_markup=keyboard)
         logger.info(f"Restarting bot after owner registration: user_id={user_id}")
 
         # Даём время отправить сообщение перед рестартом
@@ -87,5 +91,25 @@ def get_onboarding_router(settings: Settings, bot: Bot) -> Router:
         # Перезапускаем event loop — бот перечитает конфиг при следующем запуске
         # launchd / KeepAlive=true поднимет процесс автоматически
         asyncio.get_event_loop().stop()
+
+    @r.callback_query(lambda c: c.data == "show_help")
+    async def cb_show_help(callback: CallbackQuery) -> None:
+        """
+        Handle 'Начать работу' button tap after registration.
+        Показывает краткую справку по командам.
+        """
+        await callback.answer()
+        await callback.message.answer(  # type: ignore[union-attr]
+            "📋 <b>Основные команды</b>\n\n"
+            "/open <code>url</code> — открыть сайт\n"
+            "/search <code>запрос</code> — поиск в интернете\n"
+            "/shot — скриншот страницы\n"
+            "/find <code>запрос</code> — поиск видео\n"
+            "/sysinfo — CPU, RAM, диск\n"
+            "/sleep — усыпить компьютер\n"
+            "/lock — заблокировать экран\n"
+            "/status — статус бота\n"
+            "/help — полный список команд"
+        )
 
     return r

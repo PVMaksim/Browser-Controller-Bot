@@ -94,6 +94,9 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
+    # Регистрируем команды в меню Telegram (кнопка "/" в чате)
+    await _register_bot_commands(bot)
+
     browser = BrowserEngine(settings=settings)
     idle_watcher = IdleWatcher(settings=settings, bot=bot, owner_id=owner_id)
     voice_processor = VoiceProcessor(settings=settings)
@@ -167,6 +170,32 @@ async def main() -> None:
 # ------------------------------------------------------------------ #
 # Helpers (platform-specific, no-op if deps missing)                  #
 # ------------------------------------------------------------------ #
+
+async def _register_bot_commands(bot: Bot) -> None:
+    """Set bot command menu visible in Telegram chat (the '/' button)."""
+    from aiogram.types import BotCommand
+    commands = [
+        BotCommand(command="start",     description="Главное меню"),
+        BotCommand(command="help",      description="Список всех команд"),
+        BotCommand(command="status",    description="Статус бота и браузера"),
+        BotCommand(command="open",      description="Открыть сайт — /open url"),
+        BotCommand(command="search",    description="Поиск в интернете — /search запрос"),
+        BotCommand(command="shot",      description="Скриншот текущей страницы"),
+        BotCommand(command="close",     description="Закрыть вкладку"),
+        BotCommand(command="find",      description="Поиск видео — /find запрос"),
+        BotCommand(command="watchlist", description="Список «Посмотреть позже»"),
+        BotCommand(command="mediastat", description="Статус плеера"),
+        BotCommand(command="sysinfo",   description="CPU, RAM, диск"),
+        BotCommand(command="sleep",     description="Усыпить компьютер"),
+        BotCommand(command="lock",      description="Заблокировать экран"),
+        BotCommand(command="stop",      description="Остановить бота"),
+    ]
+    try:
+        await bot.set_my_commands(commands)
+        logger.info("Bot commands menu registered.")
+    except Exception as e:
+        logger.warning(f"Failed to set bot commands: {e}")
+
 
 def _show_onboarding_notification() -> None:
     """Show macOS system notification with onboarding instruction."""
