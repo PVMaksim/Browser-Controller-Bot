@@ -42,15 +42,22 @@ a = Analysis(
         # Playwright
         "playwright",
         "playwright.async_api",
-        # faster-whisper
+        # faster-whisper + движок ctranslate2
         "faster_whisper",
+        "ctranslate2",
+        "tokenizers",
+        "huggingface_hub",
+        # easyocr (опционально, OCR)
+        "easyocr",
+        "easyocr.easyocr",
+        "easyocr.utils",
+        # rumps (menu bar)
+        "rumps",
         # platformdirs, loguru, dotenv
         "platformdirs",
         "loguru",
         "dotenv",
         "psutil",
-        # rumps (опционально)
-        "rumps",
         # Все платформенные модули
         "src.platform.launchd",
         "src.platform.menu_bar",
