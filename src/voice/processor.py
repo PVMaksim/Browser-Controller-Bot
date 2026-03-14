@@ -123,15 +123,18 @@ class VoiceProcessor:
         """
         Transcribe WAV file using faster-whisper (offline, local).
         Модель загружается в память при первом вызове и кэшируется.
-        Поддерживает русский язык без явного указания — авто-определение.
+        Язык задан явно как русский — авто-определение ненадёжно на коротких фразах.
         """
         model = self._get_model()
         segments, info = model.transcribe(
             str(wav_path),
             beam_size=5,
-            language=None,          # Авто-определение языка
+            language="ru",          # Явно русский — авто ломается на фразах < 3 сек
             vad_filter=True,        # Фильтр тишины — игнорируем паузы
-            vad_parameters={"min_silence_duration_ms": 500},
+            vad_parameters={
+                "min_silence_duration_ms": 200,  # Было 500 — слишком агрессивно для коротких фраз
+                "speech_pad_ms": 400,            # Захватываем немного после конца речи
+            },
         )
         text = " ".join(segment.text.strip() for segment in segments).strip()
         logger.debug(f"Whisper detected language: {info.language}, prob: {info.language_probability:.2f}")
