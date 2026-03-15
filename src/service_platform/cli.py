@@ -4,11 +4,11 @@ Command-line interface for service management.
 Устанавливает и управляет ботом как системным сервисом (launchd / NSSM).
 
 Использование:
-  python -m src.platform.cli install    # Установить как сервис автозапуска
-  python -m src.platform.cli uninstall  # Удалить сервис
-  python -m src.platform.cli start      # Запустить сервис
-  python -m src.platform.cli stop       # Остановить сервис
-  python -m src.platform.cli status     # Показать статус
+  python -m src.service_platform.cli install    # Установить как сервис автозапуска
+  python -m src.service_platform.cli uninstall  # Удалить сервис
+  python -m src.service_platform.cli start      # Запустить сервис
+  python -m src.service_platform.cli stop       # Остановить сервис
+  python -m src.service_platform.cli status     # Показать статус
 
 macOS:  управляет launchd plist в ~/Library/LaunchAgents/
 Windows: управляет NSSM-сервисом (требует права администратора для install/uninstall)
@@ -22,7 +22,7 @@ from loguru import logger
 
 def _get_manager():
     """Return platform-appropriate service manager."""
-    from src.platform.service_manager import get_service_manager
+    from src.service_platform.service_manager import get_service_manager
     return get_service_manager()
 
 
@@ -33,7 +33,7 @@ def cmd_install(args: argparse.Namespace) -> int:
         mgr.install()
         print("✅ Сервис установлен.")
         print("   Бот будет запускаться автоматически при входе в систему.")
-        print("   Запустить сейчас: python -m src.platform.cli start")
+        print("   Запустить сейчас: python -m src.service_platform.cli start")
         return 0
     except PermissionError:
         print("❌ Недостаточно прав. Запусти с правами администратора.")
@@ -105,7 +105,7 @@ _COMMANDS = {
 def build_parser() -> argparse.ArgumentParser:
     """Build argument parser."""
     parser = argparse.ArgumentParser(
-        prog="python -m src.platform.cli",
+        prog="python -m src.service_platform.cli",
         description="Secure Browser Bot — управление системным сервисом",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="\n".join(

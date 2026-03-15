@@ -5,31 +5,41 @@ macOS: menu bar icon + system notification в режиме onboarding.
 Windows: корректно запускается как NSSM-сервис.
 """
 
-# ── PyInstaller fix: patch Dispatcher.include_router at import time ───────────
+# ── Защита стандартных модулей — должна быть самой первой строкой ─────────────
+# Некоторые пакеты (setuptools, distutils_hack) могут подменять sys.modules.
+# Принудительно загружаем platform и фиксируем его до любых других импортов.
+import platform as _platform  # noqa: F401  — must be first
 import sys as _sys
-import aiogram.dispatcher.router as _adr
-import aiogram.dispatcher.dispatcher as _add
+_sys.modules.setdefault('platform', _platform)
+# ─────────────────────────────────────────────────────────────────────────────
 
-def _force_include_router(self, router):
-    """
-    Drop-in for Router.include_router.
-    Fixes PyInstaller double-import: isinstance(router, Router) fails when
-    aiogram is loaded from two different paths, producing two class objects.
-    """
-    if not isinstance(router, _adr.Router):
-        if type(router).__name__ == 'Router':
-            try:
-                router.__class__ = _adr.Router
-            except TypeError:
-                pass
-        else:
-            raise ValueError("router should be instance of Router not type")
-    return _adr.Router._orig_include_router(self, router)
+# ── PyInstaller fix: patch Dispatcher.include_router at import time ───────────
+# Применяется только в скомпилированном .app — при запуске из исходников не нужен
+import sys as _sys
+if getattr(_sys, 'frozen', False):
+    import aiogram.dispatcher.router as _adr
+    import aiogram.dispatcher.dispatcher as _add
 
-_adr.Router._orig_include_router = _adr.Router.include_router
-_adr.Router.include_router = _force_include_router
-if hasattr(_add, 'Dispatcher'):
-    _add.Dispatcher.include_router = _force_include_router
+    def _force_include_router(self, router):
+        """
+        Drop-in for Router.include_router.
+        Fixes PyInstaller double-import: isinstance(router, Router) fails when
+        aiogram is loaded from two different paths, producing two class objects.
+        """
+        if not isinstance(router, _adr.Router):
+            if type(router).__name__ == 'Router':
+                try:
+                    router.__class__ = _adr.Router
+                except TypeError:
+                    pass
+            else:
+                raise ValueError("router should be instance of Router not type")
+        return _adr.Router._orig_include_router(self, router)
+
+    _adr.Router._orig_include_router = _adr.Router.include_router
+    _adr.Router.include_router = _force_include_router
+    if hasattr(_add, 'Dispatcher'):
+        _add.Dispatcher.include_router = _force_include_router
 # ─────────────────────────────────────────────────────────────────────────────
 
 import asyncio
@@ -200,7 +210,7 @@ async def _register_bot_commands(bot: Bot) -> None:
 def _show_onboarding_notification() -> None:
     """Show macOS system notification with onboarding instruction."""
     try:
-        from src.platform.menu_bar import show_notification
+        from src.service_platform.menu_bar import show_notification
         show_notification(
             title="Secure Browser Bot",
             message="Отправьте /register своему боту в Telegram",
@@ -218,7 +228,7 @@ def _start_menu_bar(
 ) -> None:
     """Start menu bar icon (macOS). Safe no-op if rumps not installed."""
     try:
-        from src.platform.menu_bar import start_menu_bar
+        from src.service_platform.menu_bar import start_menu_bar
         from src.utils.system_info import format_status_message
 
         def on_quit() -> None:

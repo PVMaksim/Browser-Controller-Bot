@@ -9,7 +9,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.platform.service_manager import ServiceManager
+from src.service_platform.service_manager import ServiceManager
 
 PLIST_LABEL = "com.user.secure-browser-bot"
 PLIST_FILENAME = f"{PLIST_LABEL}.plist"

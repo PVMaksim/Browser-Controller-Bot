@@ -59,8 +59,8 @@ a = Analysis(
         "dotenv",
         "psutil",
         # Все платформенные модули
-        "src.platform.launchd",
-        "src.platform.menu_bar",
+        "src.service_platform.launchd",
+        "src.service_platform.menu_bar",
         "src.player.platforms.rutube",
         "src.player.platforms.youtube",
         "src.player.platforms.vk_video",

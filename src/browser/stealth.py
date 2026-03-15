@@ -98,10 +98,7 @@ def get_ua_pool(browser_type: str) -> list[str]:
 def _make_config(browser_type: str):
     """
     Build StealthConfig appropriate for the given browser type.
-    Возвращает None если playwright_stealth недоступен.
-
-    Принцип: не применять Chromium-патчи к Firefox/WebKit —
-    они создают fingerprint-аномалии, выдающие автоматизацию.
+    Возвращает None если playwright_stealth недоступен или версия не поддерживает аргументы.
     """
     try:
         from playwright_stealth import StealthConfig
@@ -110,50 +107,57 @@ def _make_config(browser_type: str):
 
     bt = browser_type.lower()
 
-    if bt in ("chromium", "chrome"):
-        return StealthConfig(
-            navigator_webdriver=True,
-            navigator_plugins=True,
-            navigator_languages=True,
-            user_agent_override=False,   # UA задаём сами через get_user_agent()
-            webgl_vendor=True,
-            chrome_app=True,
-            chrome_runtime=True,
-            iframe_content_window=True,
-            media_codecs=True,
-            hairline_fix=True,
-            navigator_hardware_concurrency=True,
-        )
-    elif bt == "firefox":
-        # Только универсальные патчи — chrome_* и webgl в Firefox = аномалия
-        return StealthConfig(
-            navigator_webdriver=True,
-            navigator_plugins=False,
-            navigator_languages=True,
-            user_agent_override=False,
-            webgl_vendor=False,
-            chrome_app=False,
-            chrome_runtime=False,
-            iframe_content_window=False,
-            media_codecs=False,
-            hairline_fix=True,
-            navigator_hardware_concurrency=True,
-        )
-    else:
-        # webkit + unknown: минимальный безопасный набор
-        return StealthConfig(
-            navigator_webdriver=True,
-            navigator_plugins=False,
-            navigator_languages=True,
-            user_agent_override=False,
-            webgl_vendor=False,
-            chrome_app=False,
-            chrome_runtime=False,
-            iframe_content_window=False,
-            media_codecs=False,
-            hairline_fix=True,
-            navigator_hardware_concurrency=True,
-        )
+    # Пробуем полную конфигурацию, при ошибке — минимальную
+    try:
+        if bt in ("chromium", "chrome"):
+            return StealthConfig(
+                navigator_webdriver=True,
+                navigator_plugins=True,
+                navigator_languages=True,
+                user_agent_override=False,
+                webgl_vendor=True,
+                chrome_app=True,
+                chrome_runtime=True,
+                iframe_content_window=True,
+                media_codecs=True,
+                hairline_fix=True,
+                navigator_hardware_concurrency=True,
+            )
+        elif bt == "firefox":
+            return StealthConfig(
+                navigator_webdriver=True,
+                navigator_plugins=False,
+                navigator_languages=True,
+                user_agent_override=False,
+                webgl_vendor=False,
+                chrome_app=False,
+                chrome_runtime=False,
+                iframe_content_window=False,
+                media_codecs=False,
+                hairline_fix=True,
+                navigator_hardware_concurrency=True,
+            )
+        else:
+            return StealthConfig(
+                navigator_webdriver=True,
+                navigator_plugins=False,
+                navigator_languages=True,
+                user_agent_override=False,
+                webgl_vendor=False,
+                chrome_app=False,
+                chrome_runtime=False,
+                iframe_content_window=False,
+                media_codecs=False,
+                hairline_fix=True,
+                navigator_hardware_concurrency=True,
+            )
+    except TypeError:
+        # Версия playwright-stealth не поддерживает часть аргументов — используем дефолты
+        logger.warning("playwright-stealth: unsupported StealthConfig args, using defaults")
+        try:
+            return StealthConfig()
+        except Exception:
+            return None
 
 
 # ------------------------------------------------------------------ #

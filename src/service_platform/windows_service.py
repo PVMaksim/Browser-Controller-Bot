@@ -10,10 +10,10 @@ get_service_manager() и получает нужную реализацию.
   - Скрипт запускается с правами администратора (UAC) при install/uninstall
 
 Использование:
-  python -m src.platform.cli install   # установить как Windows-сервис
-  python -m src.platform.cli start
-  python -m src.platform.cli stop
-  python -m src.platform.cli status
+  python -m src.service_platform.cli install   # установить как Windows-сервис
+  python -m src.service_platform.cli start
+  python -m src.service_platform.cli stop
+  python -m src.service_platform.cli status
 """
 
 import subprocess
@@ -22,7 +22,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.platform.service_manager import ServiceManager
+from src.service_platform.service_manager import ServiceManager
 
 _SERVICE_NAME = "SecureBrowserBot"
 

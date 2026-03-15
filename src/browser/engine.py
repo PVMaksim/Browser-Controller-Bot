@@ -46,6 +46,7 @@ class BrowserEngine:
         self._page: Page | None = None
         self._stealth_available: bool = False
         self._browser_type: str = "chromium"
+        self._manually_closed: bool = False  # True когда пользователь закрыл браузер вручную
 
     # ------------------------------------------------------------------ #
     # Lifecycle                                                            #
@@ -109,6 +110,16 @@ class BrowserEngine:
 
         # Новые страницы тоже получают stealth
         self._context.on("page", lambda page: _schedule_new_page(page, self._browser_type, self._stealth_available))
+
+        # Если пользователь закрыл браузер вручную — не перезапускаем автоматически
+        def _on_close():
+            self._manually_closed = True
+            self._context = None
+            self._page = None
+            self._playwright = None
+            logger.info("Browser closed by user — auto-restart disabled until next command")
+
+        self._context.on("close", lambda: _on_close())
 
         logger.info(
             f"Browser started. type={browser_type_name}, "
@@ -202,6 +213,9 @@ class BrowserEngine:
     async def _ensure_page(self) -> Page:
         """Ensure browser is started and return active page."""
         if not self.is_running:
+            if self._manually_closed:
+                # Пользователь закрыл браузер вручную — сбрасываем флаг и стартуем по команде
+                self._manually_closed = False
             logger.info("Browser not running — auto-starting")
             await self.start()
         assert self._page is not None, "Page is None after browser start"

@@ -33,7 +33,7 @@ a = Analysis(
         "dotenv",
         "psutil",
         # Windows-специфичные модули
-        "src.platform.windows_service",
+        "src.service_platform.windows_service",
         "src.system.windows_commands",
         "src.system.dispatcher",
         # Платформенные модули плеера

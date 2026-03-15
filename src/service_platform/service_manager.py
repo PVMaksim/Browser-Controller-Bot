@@ -49,12 +49,12 @@ def get_service_manager() -> ServiceManager:
     system = platform.system()
 
     if system == "Darwin":
-        from src.platform.launchd import LaunchdManager
+        from src.service_platform.launchd import LaunchdManager
 
         return LaunchdManager()
     elif system == "Windows":
         # Реализуется в Этапе 8
-        from src.platform.windows_service import WindowsServiceManager  # type: ignore[import]
+        from src.service_platform.windows_service import WindowsServiceManager  # type: ignore[import]
 
         return WindowsServiceManager()
     else:
