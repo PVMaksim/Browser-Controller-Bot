@@ -96,6 +96,11 @@ class BrowserWatchdog:
                     logger.debug("Watchdog: browser not running, skipping probe")
                     continue
 
+                # Не перезапускаем если пользователь закрыл браузер вручную
+                if getattr(self._browser, '_manually_closed', False):
+                    logger.debug("Watchdog: browser was manually closed, skipping probe")
+                    continue
+
                 alive = await self._probe()
                 if not alive:
                     await self._handle_hang()

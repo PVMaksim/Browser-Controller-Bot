@@ -94,7 +94,8 @@ class BrowserEngine:
         self._browser_type = browser_type_name.lower()
         session_ua = _stealth.get_user_agent(self._browser_type)
 
-        self._context = await launcher.launch_persistent_context(
+        # Если указан chrome — используем установленный Chrome (не Chromium)
+        launch_kwargs: dict = dict(
             user_data_dir=str(profile_dir),
             headless=headless,
             user_agent=session_ua,
@@ -102,6 +103,10 @@ class BrowserEngine:
             locale="ru-RU",
             args=CHROMIUM_ANTIBOT_ARGS if browser_type_name.lower() in ("chromium", "chrome") else [],
         )
+        if browser_type_name.lower() == "chrome":
+            launch_kwargs["channel"] = "chrome"
+
+        self._context = await launcher.launch_persistent_context(**launch_kwargs)
 
         # Применяем stealth к уже открытым страницам и ко всем новым
         pages = self._context.pages
