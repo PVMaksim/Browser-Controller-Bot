@@ -33,7 +33,15 @@ def validate_url(url: str) -> bool:
     # Дополнительная проверка через urlparse
     try:
         parsed = urlparse(url)
-        return bool(parsed.scheme and parsed.netloc)
+        if not (parsed.scheme and parsed.netloc):
+            return False
+        # Hostname обязан содержать точку (реальный домен) или быть "localhost".
+        # Без этого одиночные слова вроде "вкладку", "браузер" проходят проверку
+        # после normalize_url добавит "https://" — и Chromium открывается на мусоре.
+        hostname = parsed.hostname or ""
+        if hostname != "localhost" and "." not in hostname:
+            return False
+        return True
     except Exception:
         return False
 

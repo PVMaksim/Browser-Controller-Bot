@@ -180,7 +180,11 @@ _SITE_ALIASES: dict[str, str] = {
 
 
 def _resolve_site(raw: str) -> str:
-    """Resolve Russian site alias to domain, or return raw if unknown."""
+    """Resolve Russian site alias to domain, or return empty string if unrecognized.
+
+    Возвращает пустую строку если слово не распознано как сайт —
+    это предотвращает открытие Chromium на мусорных URL типа 'https://вкладку'.
+    """
     import re
     stripped = raw.strip().rstrip(".,!?")  # убираем пунктуацию Whisper в конце
     # Если это уже полный URL — возвращаем как есть
@@ -190,12 +194,17 @@ def _resolve_site(raw: str) -> str:
     lower = stripped.lower()
     if lower in _SITE_ALIASES:
         return _SITE_ALIASES[lower]
-    # Если содержит точку — скорее всего уже домен
+    # Если содержит точку — скорее всего уже домен (example.com, sub.domain.ru)
     if "." in stripped:
         return stripped
     # Убираем оставшуюся пунктуацию и ищем снова
     cleaned = re.sub(r"[^\w\s\-]", "", lower).strip()
-    return _SITE_ALIASES.get(cleaned, cleaned)
+    if cleaned in _SITE_ALIASES:
+        return _SITE_ALIASES[cleaned]
+    # Одиночное слово без точки и не в словаре — не является доменом.
+    # Возвращаем пустую строку, чтобы validate_url отклонила его
+    # и пользователь получил ошибку вместо Chromium на "https://вкладку".
+    return ""
 
 def _normalize_platform(raw: str) -> str:
     """Normalize Russian platform name to internal platform key."""

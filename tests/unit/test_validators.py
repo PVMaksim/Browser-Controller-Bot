@@ -63,6 +63,38 @@ class TestUrlValidator:
         assert validate_url(url) is True
 
 
+class TestUrlValidatorRegressions:
+    """
+    Regression tests for bug: одиночные слова без точки в hostname
+    проходили validate_url и Chromium открывался на мусорном URL.
+    Фикс: hostname обязан содержать точку (или быть localhost).
+    """
+
+    @pytest.mark.parametrize("url", [
+        "https://вкладку",
+        "https://браузер",
+        "https://медиаплеер",
+        "https://закрой",
+        "https://открой",
+        "https://слово",
+    ])
+    def test_single_russian_word_without_dot_is_blocked(self, url: str):
+        # Голосовая команда «открой вкладку» после normalize_url давала
+        # "https://вкладку" — и старый validate_url пропускал его в браузер.
+        assert validate_url(url) is False, f"Должен быть заблокирован: {url}"
+
+    def test_localhost_without_dot_is_valid(self):
+        # localhost — исключение: реальный хост без точки
+        assert validate_url("http://localhost:8080") is True
+
+    def test_localhost_no_port_is_valid(self):
+        assert validate_url("http://localhost") is True
+
+    def test_domain_with_dot_still_valid(self):
+        assert validate_url("https://youtube.com") is True
+        assert validate_url("https://sub.domain.ru") is True
+
+
 class TestNormalizeUrl:
     """Tests for URL normalization (adding https:// prefix)."""
 

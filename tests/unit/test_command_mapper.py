@@ -125,7 +125,46 @@ class TestSystemCommands:
         assert result.command == expected_cmd
 
 
-class TestMapperEdgeCases:
+class TestMapperRegressions:
+    """
+    Regression tests for bug: «открой вкладку» → open('вкладку') →
+    normalize_url → validate_url=True → Chromium открывался на мусоре.
+
+    Источников бага было два:
+    1. _resolve_site возвращал сырое слово вместо пустой строки.
+    2. validate_url пропускал URL без точки в hostname.
+    """
+
+    @pytest.mark.parametrize("phrase", [
+        "открой вкладку",
+        "открой браузер",
+        "открой медиаплеер",
+        "открой что-нибудь",
+    ])
+    def test_open_unknown_word_returns_empty_argument(self, mapper, phrase: str):
+        result = mapper.map(phrase)
+        assert result is not None
+        assert result.command == "open"
+        # Пустой аргумент → validate_url его отклонит → Chromium не открывается
+        assert not result.argument, (
+            f"«{phrase}» вернул аргумент {result.argument!r}, "
+            f"Chromium откроется на мусорном URL — это баг."
+        )
+
+    def test_open_valid_site_still_works(self, mapper):
+        result = mapper.map("открой ютуб")
+        assert result is not None
+        assert result.command == "open"
+        assert result.argument == "youtube.com"
+
+    def test_open_domain_with_dot_still_works(self, mapper):
+        result = mapper.map("открой yandex.ru")
+        assert result is not None
+        assert result.command == "open"
+        assert "yandex.ru" in (result.argument or "")
+
+
+
 
     def test_empty_string_returns_none(self, mapper):
         assert mapper.map("") is None
