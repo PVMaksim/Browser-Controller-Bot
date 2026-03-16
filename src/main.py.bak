@@ -251,8 +251,6 @@ if __name__ == "__main__":
     import threading
 
     if _plt.system() == "Darwin":
-        # macOS: rumps требует главный поток.
-        # Запускаем asyncio-бота в отдельном потоке, rumps — на главном.
         _loop = asyncio.new_event_loop()
 
         def _run_bot() -> None:
@@ -262,7 +260,6 @@ if __name__ == "__main__":
         _bot_thread = threading.Thread(target=_run_bot, name="bot", daemon=True)
         _bot_thread.start()
 
-        # Ждём пока бот инициализируется (~2 сек) и только потом стартуем rumps
         import time
         time.sleep(2.5)
 
@@ -280,18 +277,12 @@ if __name__ == "__main__":
 
                 @rumps.timer(0.1)
                 def _hide_dock(self, _) -> None:
-                    """Скрываем иконку из Dock сразу после запуска."""
                     try:
                         from AppKit import NSApp, NSApplicationActivationPolicyAccessory
                         NSApp.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
                     except Exception:
                         pass
-                    # Останавливаем таймер — нужен только один раз
                     self._hide_dock.stop()
-                        rumps.MenuItem("Открыть Telegram", callback=self._open_tg),
-                        None,
-                        rumps.MenuItem("Остановить бот", callback=self._stop),
-                    ]
 
                 def _open_tg(self, _) -> None:
                     import subprocess
@@ -302,8 +293,7 @@ if __name__ == "__main__":
                     rumps.quit_application()
 
             _BotApp().run()
-        except Exception as e:
-            # rumps недоступен — просто ждём завершения бота
+        except Exception:
             _bot_thread.join()
     else:
         asyncio.run(main())

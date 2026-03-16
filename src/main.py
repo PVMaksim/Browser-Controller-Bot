@@ -251,6 +251,8 @@ if __name__ == "__main__":
     import threading
 
     if _plt.system() == "Darwin":
+        # macOS: rumps требует главный поток.
+        # Запускаем asyncio-бота в отдельном потоке, rumps — на главном.
         _loop = asyncio.new_event_loop()
 
         def _run_bot() -> None:
@@ -260,6 +262,7 @@ if __name__ == "__main__":
         _bot_thread = threading.Thread(target=_run_bot, name="bot", daemon=True)
         _bot_thread.start()
 
+        # Ждём пока бот инициализируется (~2 сек) и только потом стартуем rumps
         import time
         time.sleep(2.5)
 
@@ -275,15 +278,6 @@ if __name__ == "__main__":
                         rumps.MenuItem("Остановить бот", callback=self._stop),
                     ]
 
-                @rumps.timer(0.1)
-                def _hide_dock(self, _) -> None:
-                    try:
-                        from AppKit import NSApp, NSApplicationActivationPolicyAccessory
-                        NSApp.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
-                    except Exception:
-                        pass
-                    self._hide_dock.stop()
-
                 def _open_tg(self, _) -> None:
                     import subprocess
                     subprocess.run(["open", "https://t.me/"], check=False)
@@ -292,8 +286,17 @@ if __name__ == "__main__":
                     _loop.call_soon_threadsafe(_loop.stop)
                     rumps.quit_application()
 
+            # Скрываем Dock-иконку до запуска App
+            try:
+                from AppKit import NSApplication, NSApplicationActivationPolicyAccessory
+                app = NSApplication.sharedApplication()
+                app.setActivationPolicy_(NSApplicationActivationPolicyAccessory)
+            except Exception:
+                pass
+
             _BotApp().run()
-        except Exception:
+        except Exception as e:
+            # rumps недоступен — просто ждём завершения бота
             _bot_thread.join()
     else:
         asyncio.run(main())

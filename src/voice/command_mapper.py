@@ -181,7 +181,10 @@ _SITE_ALIASES: dict[str, str] = {
 
 def _resolve_site(raw: str) -> str:
     """Resolve Russian site alias to domain, or return raw if unknown."""
-    return _SITE_ALIASES.get(raw.lower().strip(), raw.strip())
+    import re
+    # Убираем пунктуацию которую Whisper добавляет в конце фраз
+    cleaned = re.sub(r"[^\w\s\-\.]", "", raw.lower().strip()).strip()
+    return _SITE_ALIASES.get(cleaned, cleaned)
 
 def _normalize_platform(raw: str) -> str:
     """Normalize Russian platform name to internal platform key."""
@@ -206,7 +209,9 @@ class VoiceCommandMapper:
         if not text or not text.strip():
             return None
 
-        text_clean = text.strip()
+        # Нормализуем Unicode — Whisper иногда возвращает омографы или невидимые символы
+        import unicodedata
+        text_clean = unicodedata.normalize("NFC", text.strip())
 
         # Шаг 1: голосовые паттерны (более специфичные)
         for mapping in _ALL_MAPPINGS:
