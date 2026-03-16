@@ -3,6 +3,7 @@
 OCR module — Stage 4.
 Extracts text from screenshots/photos and generates a search URL.
 
+
 Сценарий использования:
   1. Пользователь отправляет фото (скриншот с названием фильма, текстом с экрана и т.д.)
   2. process_image_search() распознаёт текст через EasyOCR
