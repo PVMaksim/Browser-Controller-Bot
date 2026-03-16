@@ -182,8 +182,12 @@ _SITE_ALIASES: dict[str, str] = {
 def _resolve_site(raw: str) -> str:
     """Resolve Russian site alias to domain, or return raw if unknown."""
     import re
-    # Убираем пунктуацию которую Whisper добавляет в конце фраз (! ? . , и т.д.)
-    cleaned = re.sub(r"[^\w\s\-]", "", raw.lower().strip()).strip()
+    stripped = raw.strip()
+    # Если это уже URL — возвращаем как есть
+    if stripped.startswith(("http://", "https://")) or "." in stripped:
+        return stripped
+    # Убираем пунктуацию которую Whisper добавляет в конце коротких слов (! ? , и т.д.)
+    cleaned = re.sub(r"[^\w\s\-]", "", stripped.lower()).strip()
     return _SITE_ALIASES.get(cleaned, cleaned)
 
 def _normalize_platform(raw: str) -> str:
